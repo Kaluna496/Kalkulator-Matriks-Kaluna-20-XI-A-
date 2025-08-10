@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kalkulator Matriks</title>
+<link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+<div class="container">
+  <div class="header">
+    <h1>Kalkulator Matriks</h1>
+    <div class="lead">Operasi: Penjumlahan, Perkalian, Transpose, Determinan, Invers</div>
+  </div>
+
+  <div class="card controls">
+    <div class="inputs">
+      <label>Jumlah Baris: <input type="number" id="rows" min="1" value="2" /></label>
+      <label>Jumlah Kolom: <input type="number" id="cols" min="1" value="2" /></label>
+      <button class="primary" onclick="generateMatrix()">Buat Matriks</button>
+    </div>
+    <div class="note">Isi nilai matriks A dan B lalu pilih operasi. Determinan & Invers hanya untuk matriks persegi (A).</div>
+  </div>
+
+  <div class="matrix-area" id="matrices"></div>
+
+  <div class="card actions">
+    <button class="primary" onclick="addMatrices()">Penjumlahan</button>
+    <button class="secondary" onclick="multiplyMatrices()">Perkalian</button>
+    <button class="secondary" onclick="transposeMatrix()">Transpose (A)</button>
+    <button class="secondary" onclick="determinantMatrix()">Determinan (A)</button>
+    <button class="secondary" onclick="inverseMatrix()">Invers (A)</button>
+  </div>
+
+  <div class="card result" id="result"></div>
+</div>
+
+<script>
+function generateMatrix() {
+    let rows = parseInt(document.getElementById("rows").value) || 1;
+    let cols = parseInt(document.getElementById("cols").value) || 1;
+    let container = document.getElementById("matrices");
+    container.innerHTML = "";
+
+    ['A','B'].forEach(name => {
+        let box = document.createElement('div');
+        box.className = 'matrix-box card';
+        let h = document.createElement('h3');
+        h.innerText = 'Matriks ' + name;
+        box.appendChild(h);
+        let wrap = document.createElement('div');
+        wrap.className = 'matrix-input';
+        for (let i = 0; i < rows; i++) {
+            for (let j = 0; j < cols; j++) {
+                let inp = document.createElement('input');
+                inp.type = 'number';
+                inp.id = `${name}_${i}_${j}`;
+                inp.value = '0';
+                wrap.appendChild(inp);
+            }
+            let br = document.createElement('br');
+            wrap.appendChild(br);
+        }
+        box.appendChild(wrap);
+        container.appendChild(box);
+    });
+}
+
+function getMatrix(name) {
+    let rows = parseInt(document.getElementById("rows").value);
+    let cols = parseInt(document.getElementById("cols").value);
+    let matrix = [];
+    for (let i = 0; i < rows; i++) {
+        let row = [];
+        for (let j = 0; j < cols; j++) {
+            let v = parseFloat(document.getElementById(`${name}_${i}_${j}`).value);
+            row.push(isNaN(v) ? 0 : v);
+        }
+        matrix.push(row);
+    }
+    return matrix;
+}
+
+function displayResultText(html) {
+    document.getElementById('result').innerHTML = html;
+}
+
+function displayMatrix(matrix) {
+    let html = '<strong>Hasil:</strong><br/>';
+    matrix.forEach(r => {
+        html += r.map(x => Number.isInteger(x) ? x : Number(x).toFixed(4)).join('  ') + '<br/>';
+    });
+    displayResultText(html);
+}
+
+function addMatrices() {
+    let A = getMatrix('A'), B = getMatrix('B');
+    if (A.length !== B.length || A[0].length !== B[0].length) {
+        displayResultText('ERROR: Ukuran matriks harus sama untuk penjumlahan.');
+        return;
+    }
+    let res = [];
+    for (let i=0;i<A.length;i++){
+        let row = [];
+        for (let j=0;j<A[0].length;j++){
+            row.push(A[i][j] + B[i][j]);
+        }
+        res.push(row);
+    }
+    displayMatrix(res);
+}
+
+function multiplyMatrices() {
+    let A = getMatrix('A'), B = getMatrix('B');
+    if (A[0].length !== B.length) {
+        displayResultText('ERROR: Kolom A harus sama dengan baris B!');
+        return;
+    }
+    let res = [];
+    for (let i=0;i<A.length;i++){
+        let row = [];
+        for (let j=0;j<B[0].length;j++){
+            let sum = 0;
+            for (let k=0;k<B.length;k++){ sum += A[i][k]*B[k][j]; }
+            row.push(sum);
+        }
+        res.push(row);
+    }
+    displayMatrix(res);
+}
+
+function transposeMatrix() {
+    let A = getMatrix('A');
+    let res = A[0].map((_,i)=>A.map(r=>r[i]));
+    displayMatrix(res);
+}
+
+function determinantMatrix() {
+    let A = getMatrix('A');
+    if (A.length !== A[0].length) { displayResultText('ERROR: Matriks harus persegi!'); return; }
+    try {
+        let det = math.det(math.matrix(A));
+        displayResultText('<strong>Determinan:</strong> ' + det);
+    } catch(e) {
+        displayResultText('ERROR menghitung determinan: ' + e.message);
+    }
+}
+
+function inverseMatrix() {
+    let A = getMatrix('A');
+    if (A.length !== A[0].length) { displayResultText('ERROR: Matriks harus persegi!'); return; }
+    try {
+        let inv = math.inv(math.matrix(A));
+        displayMatrix(inv._data);
+    } catch(e) {
+        displayResultText('ERROR: Matriks tidak memiliki invers atau kesalahan lain.');
+    }
+}
+</script>
+
+<!-- math.js dari CDN -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mathjs/11.8.0/math.min.js"></script>
+</body>
+</html>
